@@ -2,6 +2,10 @@ use arboard::Clipboard;
 use enigo::{Enigo, Key, KeyboardControllable};
 use std::{thread, time::Duration};
 
+const CLIPBOARD_SETTLE_DELAY: Duration = Duration::from_millis(120);
+const CLIPBOARD_RESTORE_DELAY: Duration = Duration::from_millis(900);
+const KEY_EVENT_DELAY: Duration = Duration::from_millis(25);
+
 #[derive(Default)]
 pub struct TextInserter;
 
@@ -38,11 +42,11 @@ fn paste_with_ports(
     };
 
     clipboard.set_text(text)?;
-    thread::sleep(Duration::from_millis(70));
+    thread::sleep(CLIPBOARD_SETTLE_DELAY);
     keyboard.paste()?;
 
     if restore_clipboard {
-        thread::sleep(Duration::from_millis(250));
+        thread::sleep(CLIPBOARD_RESTORE_DELAY);
         if let Some(previous) = previous {
             clipboard.set_text(&previous)?;
         }
@@ -88,9 +92,15 @@ impl KeyboardPort for SystemKeyboard {
         let modifier = Key::Meta;
         #[cfg(not(target_os = "macos"))]
         let modifier = Key::Control;
+        #[cfg(target_os = "windows")]
+        let paste_key = Key::V;
+        #[cfg(not(target_os = "windows"))]
+        let paste_key = Key::Layout('v');
 
         self.enigo.key_down(modifier);
-        self.enigo.key_click(Key::Layout('v'));
+        thread::sleep(KEY_EVENT_DELAY);
+        self.enigo.key_click(paste_key);
+        thread::sleep(KEY_EVENT_DELAY);
         self.enigo.key_up(modifier);
         Ok(())
     }

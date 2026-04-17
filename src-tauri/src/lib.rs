@@ -7,6 +7,7 @@ mod prompt;
 pub mod settings;
 pub mod speech;
 mod state;
+mod tray;
 
 use tauri::{Manager, WindowEvent};
 
@@ -16,6 +17,9 @@ pub fn run() {
         .setup(|app| {
             let state = state::AppState::new()?;
             app.manage(state);
+            let tray_icon = tray::create(app.handle())?;
+            app.manage(tray_icon);
+            overlay::configure_overlay(app.handle())?;
             overlay::position_overlay(app.handle())?;
             Ok(())
         })

@@ -33,6 +33,8 @@ The first run can download `ggml-small-q5_1.bin` into the app config directory. 
 - Hold `Control+Alt+Space` to record.
 - Release the hotkey to transcribe.
 - A small bottom-center overlay shows listening, transcribing, pasted, and error states.
+- Closing the settings window keeps the app running in the tray.
+- The tray menu can reopen the settings window or quit the app.
 - The app saves current clipboard text, pastes the transcript, then restores the previous clipboard text when enabled.
 - Glossary terms are added to the Whisper initial prompt to help with technical words.
 

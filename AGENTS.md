@@ -10,6 +10,7 @@ Core behavior:
 - Paste the transcript into the active field through clipboard + paste shortcut.
 - Restore the previous clipboard text when enabled.
 - Use a small bottom-center overlay for listening/transcribing/pasted/error states.
+- Keep dictation active when the settings window is closed; the tray menu reopens the window or exits the app.
 - Use a glossary + Whisper initial prompt for technical terms. Do not add a local LLM unless explicitly requested.
 
 ## Stack
@@ -32,6 +33,7 @@ Important files:
 - Settings: `src-tauri/src/settings.rs`
 - Model download/status: `src-tauri/src/model.rs`
 - Clipboard paste: `src-tauri/src/inserter.rs`
+- Tray menu/background lifecycle: `src-tauri/src/tray.rs`
 - Windows helper: `scripts/windows-dev.ps1`
 
 ## Windows Toolchain

@@ -37,10 +37,18 @@ pub fn set_status(
         OverlayState::Idle => window.hide()?,
         _ => {
             position_overlay(app)?;
+            let _ = window.set_focusable(false);
             window.show()?;
         }
     }
 
+    Ok(())
+}
+
+pub fn configure_overlay(app: &AppHandle) -> anyhow::Result<()> {
+    if let Some(window) = app.get_webview_window("overlay") {
+        window.set_focusable(false)?;
+    }
     Ok(())
 }
 
