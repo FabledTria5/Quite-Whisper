@@ -2,7 +2,7 @@
 
 ## Project
 
-QuiteWhisper is a Tauri 2 desktop MVP for local push-to-talk dictation on Windows first, with macOS kept in the architecture.
+QuiteWhisper is a local push-to-talk dictation app on Windows first, with macOS kept in the architecture. The UI is Compose Desktop and the Rust dictation engine lives in a separate `engine/` crate.
 
 Core behavior:
 - Hold `Control+Alt+Space` to record.
@@ -15,25 +15,24 @@ Core behavior:
 
 ## Stack
 
-- Frontend: Vite + TypeScript + vanilla CSS.
-- Desktop shell: Tauri 2.
-- Backend: Rust.
+- Frontend: Compose Desktop.
+- Desktop shell: Compose Desktop.
+- Backend: Rust engine crate in `engine/`.
 - ASR: `whisper-rs` / `whisper.cpp`.
 - Audio input: `cpal`.
 - Clipboard: `arboard`.
 - Synthetic paste: `enigo`.
 
 Important files:
-- Frontend app: `src/main.ts`
-- Overlay UI: `src/overlay.ts`, `src/overlay.css`
-- Tauri config: `src-tauri/tauri.conf.json`
-- Backend commands: `src-tauri/src/commands.rs`
-- Audio pipeline: `src-tauri/src/audio.rs`
-- Whisper pipeline: `src-tauri/src/speech.rs`
-- Settings: `src-tauri/src/settings.rs`
-- Model download/status: `src-tauri/src/model.rs`
-- Clipboard paste: `src-tauri/src/inserter.rs`
-- Tray menu/background lifecycle: `src-tauri/src/tray.rs`
+- Compose app: `composeApp/src/main/kotlin/local/quitewhisper/compose/Main.kt`
+- Compose engine client: `composeApp/src/main/kotlin/local/quitewhisper/compose/engine/EngineClient.kt`
+- Engine IPC/runtime: `engine/src/engine.rs`
+- Audio pipeline: `engine/src/audio.rs`
+- Whisper pipeline: `engine/src/speech.rs`
+- Settings: `engine/src/settings.rs`
+- Model download/status: `engine/src/model.rs`
+- Clipboard paste: `engine/src/inserter.rs`
+- Hotkey listener: `engine/src/hotkey.rs`
 - Windows helper: `scripts/windows-dev.ps1`
 
 ## Windows Toolchain
@@ -50,7 +49,8 @@ Use the helper script from the repo root so all required paths/env vars are set:
 ```powershell
 .\scripts\windows-dev.ps1 cargo check
 .\scripts\windows-dev.ps1 cargo test
-.\scripts\windows-dev.ps1 npm run tauri:build
+gradle :composeApp:test
+gradle :composeApp:packageDistributionForCurrentOS
 ```
 
 The helper sets:
@@ -59,29 +59,20 @@ The helper sets:
 - Rust, LLVM, CMake, and Ninja paths.
 - Visual Studio Developer Command Prompt environment.
 
-For frontend-only checks:
-
-```powershell
-npm run build
-```
-
 ## Verified State
 
 The project has been verified on Windows with:
 
 ```powershell
-npm run build
 .\scripts\windows-dev.ps1 cargo check
 .\scripts\windows-dev.ps1 cargo test
-.\scripts\windows-dev.ps1 npm run tauri:build
+gradle :composeApp:test
+gradle :composeApp:packageDistributionForCurrentOS
 ```
 
-The release build produced:
-- `src-tauri/target/release/quite-whisper.exe`
-- `src-tauri/target/release/bundle/msi/QuiteWhisper_0.1.0_x64_en-US.msi`
-- `src-tauri/target/release/bundle/nsis/QuiteWhisper_0.1.0_x64-setup.exe`
-
-A smoke launch of `quite-whisper.exe` succeeded: the process started and stayed alive for several seconds.
+The Compose package build produces:
+- `composeApp/build/compose/binaries/main/msi/QuiteWhisper-1.0.0.msi`
+- `engine/target/release/quite-whisper-engine.exe`
 
 ## Runtime Notes
 
@@ -100,16 +91,16 @@ The default model is:
 ggml-small-q5_1.bin
 ```
 
-It is downloaded from Hugging Face through `src-tauri/src/model.rs`.
+It is downloaded from Hugging Face through `engine/src/model.rs`.
 
 ## Implementation Constraints
 
 - Keep the MVP local-only. Do not introduce cloud transcription.
 - Keep the LLM post-edit path as a future extension point via `TextPostProcessor`; do not add Gemma/Qwen unless requested.
 - Do not replace the clipboard insertion strategy without testing against common Windows apps.
-- Be careful with global shortcut changes; frontend uses Tauri global-shortcut plugin press/release events.
+- Be careful with global shortcut changes; Compose receives press/release events from `engine/src/hotkey.rs`.
 - The repo may not be initialized as git. Check before using git commands.
-- Avoid committing build outputs from `dist/`, `target/`, or `src-tauri/target/`.
+- Avoid committing build outputs from `target/`, `engine/target/`, or `composeApp/build/`.
 
 ## Known Follow-Ups
 

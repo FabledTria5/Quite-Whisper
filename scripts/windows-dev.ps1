@@ -29,8 +29,8 @@ $env:LIBCLANG_PATH = $llvmBin
 $env:CMAKE_GENERATOR = "Ninja"
 
 $commandLine = $Command -join " "
-if ($Command.Count -gt 0 -and $Command[0] -eq "cargo") {
-    $commandLine = "cd /d `"$PSScriptRoot\..\src-tauri`" && $commandLine"
+if ($Command.Count -gt 0 -and $Command[0] -eq "cargo" -and -not ($Command -contains "--manifest-path")) {
+    $commandLine = "cd /d `"$PSScriptRoot\..\engine`" && $commandLine"
 }
 
 cmd /c "`"$vsDevCmd`" -arch=x64 -host_arch=x64 && $commandLine"

@@ -2,28 +2,27 @@
 
 Local push-to-talk dictation for Windows and macOS.
 
-The MVP records while `Control+Alt+Space` is held, transcribes locally with Whisper, and pastes the result into the active field. It uses a Tauri 2 UI, a Rust backend, microphone capture through `cpal`, and `whisper.cpp` through Rust bindings.
+The MVP records while `Control+Alt+Space` is held, transcribes locally with Whisper, and pastes the result into the active field. The UI is Compose Desktop; the Rust dictation engine lives in `engine/` and runs as a local sidecar.
 
 ## Requirements
 
-- Node.js 20 or newer.
 - Rust stable with Cargo.
+- JDK 17 or newer for Gradle/Compose.
 - Windows: Microsoft C++ Build Tools.
 - macOS: Xcode Command Line Tools and microphone/accessibility permissions.
 
 ## Development
 
 ```powershell
-npm install
-npm run tauri:dev
+gradle :composeApp:run
 ```
 
-On Windows, run Rust/Tauri commands through the helper so MSVC, LLVM/libclang, CMake, and Ninja are visible in the same shell:
+On Windows, run Rust commands through the helper so MSVC, LLVM/libclang, CMake, and Ninja are visible in the same shell:
 
 ```powershell
 .\scripts\windows-dev.ps1 cargo check
 .\scripts\windows-dev.ps1 cargo test
-.\scripts\windows-dev.ps1 npm run tauri:build
+gradle :composeApp:packageDistributionForCurrentOS
 ```
 
 The first run can download `ggml-small-q5_1.bin` into the app config directory. You can also select an existing `.bin` model in the settings window, including a heavier model such as `ggml-large-v3-turbo-q5_0.bin` when accuracy matters more than latency.
