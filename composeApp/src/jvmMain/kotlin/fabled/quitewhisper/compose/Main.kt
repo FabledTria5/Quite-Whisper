@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,58 +39,61 @@ import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kdroid.composetray.tray.api.Tray
 import fabled.quitewhisper.compose.engine.OverlayPayload
 
-fun main() = application {
-    val scope = rememberCoroutineScope()
-    val controller = remember { AppController(scope) }
+fun main()  {
+    System.setProperty("skiko.renderApi", "OPENGL")
 
-    val state by controller.state.collectAsStateWithLifecycle()
+    application {
+        val scope = rememberCoroutineScope()
+        val controller = remember { AppController(scope) }
 
-    DisposableEffect(Unit) {
-        controller.start()
-        onDispose { controller.close() }
-    }
+        val state by controller.state.collectAsState()
 
-    QuiteWhisperTray(
-        state = state,
-        onAction = controller::onAction,
-        onExit = {
-            controller.close()
-            exitApplication()
+        DisposableEffect(Unit) {
+            controller.start()
+            onDispose { controller.close() }
         }
-    )
 
-    if (state.mainWindowVisible) {
-        Window(
-            onCloseRequest = { controller.onAction(AppAction.HideMainWindow) },
-            title = "QuiteWhisper Compose",
-        ) {
-            QuiteWhisperApp(
-                state = state,
-                onAction = controller::onAction,
-            )
+        QuiteWhisperTray(
+            state = state,
+            onAction = controller::onAction,
+            onExit = {
+                controller.close()
+                exitApplication()
+            }
+        )
+
+        if (state.mainWindowVisible) {
+            Window(
+                onCloseRequest = { controller.onAction(AppAction.HideMainWindow) },
+                title = "QuiteWhisper Compose",
+            ) {
+                QuiteWhisperApp(
+                    state = state,
+                    onAction = controller::onAction,
+                )
+            }
         }
-    }
 
-    val overlay = state.overlay
-    if (overlay != null) {
-        DialogWindow(
-            onCloseRequest = {},
-            title = "QuiteWhisper",
-            state = DialogState(
-                position = WindowPosition(Alignment.BottomCenter),
-                width = 380.dp,
-                height = 84.dp,
-            ),
-            undecorated = true,
-            transparent = true,
-            alwaysOnTop = true,
-            resizable = false
-        ) {
-            RecordingChip(overlay)
+        val overlay = state.overlay
+        if (overlay != null) {
+            DialogWindow(
+                onCloseRequest = {},
+                title = "QuiteWhisper",
+                state = DialogState(
+                    position = WindowPosition(Alignment.BottomCenter),
+                    width = 380.dp,
+                    height = 84.dp,
+                ),
+                undecorated = true,
+                transparent = true,
+                alwaysOnTop = true,
+                resizable = false
+            ) {
+                RecordingChip(overlay)
+            }
         }
     }
 }
