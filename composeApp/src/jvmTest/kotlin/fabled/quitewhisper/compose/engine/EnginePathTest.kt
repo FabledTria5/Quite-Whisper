@@ -1,4 +1,4 @@
-package local.quitewhisper.compose.engine
+package fabled.quitewhisper.compose.engine
 
 import java.nio.file.Files
 import kotlin.io.path.Path

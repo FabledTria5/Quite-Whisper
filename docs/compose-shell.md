@@ -5,7 +5,7 @@ QuiteWhisper now uses a Compose Multiplatform desktop shell backed by a separate
 ## Architecture
 
 - `engine/src/engine.rs` defines the JSON Lines IPC contract and runtime for the Rust dictation engine.
-- `engine/src/bin/quite-whisper-engine.rs` exposes the Rust engine as a local sidecar process.
+- `engine/src/bin/quite-whisper-engine.rs` exposes the Rust engine as a fabled sidecar process.
 - `composeApp/` contains the Compose Desktop prototype.
 - Compose talks to Rust through stdin/stdout JSON Lines. Each command carries an `id`; results echo the same `id`; events are emitted independently.
 

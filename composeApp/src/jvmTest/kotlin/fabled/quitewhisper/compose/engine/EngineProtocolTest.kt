@@ -1,4 +1,4 @@
-package local.quitewhisper.compose.engine
+package fabled.quitewhisper.compose.engine
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

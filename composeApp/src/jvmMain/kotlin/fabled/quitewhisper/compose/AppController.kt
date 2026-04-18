@@ -1,22 +1,21 @@
-package local.quitewhisper.compose
+package fabled.quitewhisper.compose
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import local.quitewhisper.compose.engine.AppSettings
-import local.quitewhisper.compose.engine.EngineClient
-import local.quitewhisper.compose.engine.EngineConnection
-import local.quitewhisper.compose.engine.EngineEventName
-import local.quitewhisper.compose.engine.EngineJson
-import local.quitewhisper.compose.engine.EngineMessage
-import local.quitewhisper.compose.engine.EngineRequest
-import local.quitewhisper.compose.engine.OverlayPayload
-import local.quitewhisper.compose.engine.newCommandId
-import local.quitewhisper.compose.engine.payloadAs
+import fabled.quitewhisper.compose.engine.AppSettings
+import fabled.quitewhisper.compose.engine.EngineClient
+import fabled.quitewhisper.compose.engine.EngineConnection
+import fabled.quitewhisper.compose.engine.EngineEventName
+import fabled.quitewhisper.compose.engine.EngineJson
+import fabled.quitewhisper.compose.engine.EngineMessage
+import fabled.quitewhisper.compose.engine.EngineRequest
+import fabled.quitewhisper.compose.engine.OverlayPayload
+import fabled.quitewhisper.compose.engine.newCommandId
+import fabled.quitewhisper.compose.engine.payloadAs
 import kotlinx.serialization.json.decodeFromJsonElement
 
 class AppController(
@@ -102,7 +101,7 @@ class AppController(
             .payloadAs<AppSettings>()
         val modelStatus = engineClient
             .send(EngineRequest.GetModelStatus(newCommandId()))
-            .payloadAs<local.quitewhisper.compose.engine.ModelStatus>()
+            .payloadAs<fabled.quitewhisper.compose.engine.ModelStatus>()
 
         _state.update {
             it.copy(

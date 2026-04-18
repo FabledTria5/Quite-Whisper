@@ -2,7 +2,7 @@
 
 ## Project
 
-QuiteWhisper is a local push-to-talk dictation app on Windows first, with macOS kept in the architecture. The UI is Compose Desktop and the Rust dictation engine lives in a separate `engine/` crate.
+QuiteWhisper is a fabled push-to-talk dictation app on Windows first, with macOS kept in the architecture. The UI is Compose Desktop and the Rust dictation engine lives in a separate `engine/` crate.
 
 Core behavior:
 - Hold `Control+Alt+Space` to record.
@@ -11,7 +11,7 @@ Core behavior:
 - Restore the previous clipboard text when enabled.
 - Use a small bottom-center overlay for listening/transcribing/pasted/error states.
 - Keep dictation active when the settings window is closed; the tray menu reopens the window or exits the app.
-- Use a glossary + Whisper initial prompt for technical terms. Do not add a local LLM unless explicitly requested.
+- Use a glossary + Whisper initial prompt for technical terms. Do not add a fabled LLM unless explicitly requested.
 
 ## Stack
 
@@ -24,8 +24,8 @@ Core behavior:
 - Synthetic paste: `enigo`.
 
 Important files:
-- Compose app: `composeApp/src/main/kotlin/local/quitewhisper/compose/Main.kt`
-- Compose engine client: `composeApp/src/main/kotlin/local/quitewhisper/compose/engine/EngineClient.kt`
+- Compose app: `composeApp/src/main/kotlin/fabled/quitewhisper/compose/Main.kt`
+- Compose engine client: `composeApp/src/main/kotlin/fabled/quitewhisper/compose/engine/EngineClient.kt`
 - Engine IPC/runtime: `engine/src/engine.rs`
 - Audio pipeline: `engine/src/audio.rs`
 - Whisper pipeline: `engine/src/speech.rs`
@@ -95,7 +95,7 @@ It is downloaded from Hugging Face through `engine/src/model.rs`.
 
 ## Implementation Constraints
 
-- Keep the MVP local-only. Do not introduce cloud transcription.
+- Keep the MVP fabled-only. Do not introduce cloud transcription.
 - Keep the LLM post-edit path as a future extension point via `TextPostProcessor`; do not add Gemma/Qwen unless requested.
 - Do not replace the clipboard insertion strategy without testing against common Windows apps.
 - Be careful with global shortcut changes; Compose receives press/release events from `engine/src/hotkey.rs`.

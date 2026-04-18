@@ -1,9 +1,9 @@
-package local.quitewhisper.compose
+package fabled.quitewhisper.compose
 
-import local.quitewhisper.compose.engine.AppSettings
-import local.quitewhisper.compose.engine.MicrophoneStatus
-import local.quitewhisper.compose.engine.ModelStatus
-import local.quitewhisper.compose.engine.OverlayPayload
+import fabled.quitewhisper.compose.engine.AppSettings
+import fabled.quitewhisper.compose.engine.MicrophoneStatus
+import fabled.quitewhisper.compose.engine.ModelStatus
+import fabled.quitewhisper.compose.engine.OverlayPayload
 
 data class AppUiState(
     val status: String = "Starting...",

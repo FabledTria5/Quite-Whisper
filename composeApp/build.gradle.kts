@@ -2,8 +2,10 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 val isWindowsHost = System.getProperty("os.name").contains("Windows", ignoreCase = true)
 val isMacHost = System.getProperty("os.name").contains("Mac", ignoreCase = true)
+
 val engineExecutableName = if (isWindowsHost) "quite-whisper-engine.exe" else "quite-whisper-engine"
 val engineResourcesRoot = layout.buildDirectory.dir("engineResources")
+
 val engineResourcesOsDir = when {
     isWindowsHost -> "windows"
     isMacHost -> "macos"
@@ -11,25 +13,45 @@ val engineResourcesOsDir = when {
 }
 
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlin.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.compose)
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.composeHotReload)
 }
 
 kotlin {
-    jvmToolchain(17)
-}
+    jvm()
 
-dependencies {
-    implementation(compose.desktop.currentOs)
-    implementation(compose.material3)
-    implementation(libs.compose.native.tray)
-    implementation(libs.kotlinx.coroutines.swing)
-    implementation(libs.kotlinx.serialization.json)
+    sourceSets {
+        commonMain.dependencies {
+            // Core
+            implementation(dependencyNotation =  libs.kotlinx.serialization.json)
 
-    testImplementation(libs.kotlin.test)
-    testImplementation(libs.kotlinx.coroutines.test)
+            // Lifecycle
+            implementation(dependencyNotation = libs.androidx.lifecycle.viewmodelCompose)
+            implementation(dependencyNotation = libs.androidx.lifecycle.runtimeCompose)
+
+            // Compose
+            implementation(dependencyNotation = libs.compose.runtime)
+            implementation(dependencyNotation = libs.compose.foundation)
+            implementation(dependencyNotation = libs.compose.material3)
+            implementation(dependencyNotation = libs.compose.ui)
+            implementation(dependencyNotation = libs.compose.components.resources)
+            implementation(dependencyNotation = libs.compose.uiToolingPreview)
+            implementation(dependencyNotation = libs.compose.native.tray)
+        }
+
+        commonTest.dependencies {
+            implementation(dependencyNotation = libs.kotlin.test)
+            implementation(dependencyNotation = libs.kotlinx.coroutines.test)
+        }
+
+        jvmMain.dependencies {
+            implementation(dependencyNotation = compose.desktop.currentOs)
+            implementation(dependencyNotation = libs.kotlinx.coroutines.swing)
+        }
+    }
 }
 
 fun Exec.configureRustEngineBuild(release: Boolean) {
@@ -77,11 +99,11 @@ tasks.matching { it.name == "run" || it.name == "runDistributable" }.configureEa
 
 compose.desktop {
     application {
-        mainClass = "local.quitewhisper.compose.MainKt"
+        mainClass = "fabled.quitewhisper.compose.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Msi, TargetFormat.Dmg, TargetFormat.Deb)
-            packageName = "QuiteWhisper"
+            packageName = "fabled.quitewhisper.compose"
             packageVersion = "1.0.0"
             appResourcesRootDir.set(engineResourcesRoot)
         }

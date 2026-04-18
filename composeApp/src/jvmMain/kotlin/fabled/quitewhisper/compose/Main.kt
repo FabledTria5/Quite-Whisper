@@ -1,8 +1,7 @@
-package local.quitewhisper.compose
+package fabled.quitewhisper.compose
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -24,7 +24,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -34,17 +33,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
+import androidx.compose.ui.window.DialogState
+import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kdroid.composetray.tray.api.Tray
-import local.quitewhisper.compose.engine.OverlayPayload
+import fabled.quitewhisper.compose.engine.OverlayPayload
 
 fun main() = application {
     val scope = rememberCoroutineScope()
     val controller = remember { AppController(scope) }
-    val state by controller.state.collectAsState()
+
+    val state by controller.state.collectAsStateWithLifecycle()
 
     DisposableEffect(Unit) {
         controller.start()
@@ -57,7 +59,7 @@ fun main() = application {
         onExit = {
             controller.close()
             exitApplication()
-        },
+        }
     )
 
     if (state.mainWindowVisible) {
@@ -74,10 +76,10 @@ fun main() = application {
 
     val overlay = state.overlay
     if (overlay != null) {
-        Window(
+        DialogWindow(
             onCloseRequest = {},
             title = "QuiteWhisper",
-            state = WindowState(
+            state = DialogState(
                 position = WindowPosition(Alignment.BottomCenter),
                 width = 380.dp,
                 height = 84.dp,
@@ -85,7 +87,7 @@ fun main() = application {
             undecorated = true,
             transparent = true,
             alwaysOnTop = true,
-            resizable = false,
+            resizable = false
         ) {
             RecordingChip(overlay)
         }

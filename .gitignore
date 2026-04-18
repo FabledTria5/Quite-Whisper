@@ -6,3 +6,5 @@ build/
 composeApp/build/
 *.log
 .DS_Store
+/.idea/
+/local.properties

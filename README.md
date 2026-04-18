@@ -2,7 +2,7 @@
 
 Local push-to-talk dictation for Windows and macOS.
 
-The MVP records while `Control+Alt+Space` is held, transcribes locally with Whisper, and pastes the result into the active field. The UI is Compose Desktop; the Rust dictation engine lives in `engine/` and runs as a local sidecar.
+The MVP records while `Control+Alt+Space` is held, transcribes locally with Whisper, and pastes the result into the active field. The UI is Compose Desktop; the Rust dictation engine lives in `engine/` and runs as a fabled sidecar.
 
 ## Requirements
 
@@ -39,7 +39,7 @@ The first run can download `ggml-small-q5_1.bin` into the app config directory. 
 
 ## Notes
 
-- The app does not use a local LLM in v1. `TextPostProcessor` is present as the extension point for future Gemma/Qwen-style correction.
+- The app does not use a fabled LLM in v1. `TextPostProcessor` is present as the extension point for future Gemma/Qwen-style correction.
 - Rust is not vendored. Install it from `https://rustup.rs/` before building.
 - Windows builds need Visual Studio Build Tools with MSVC, LLVM, CMake, and Ninja.
 - The default model is the faster `small-q5_1` preset. If accuracy is not enough for technical dictation, select a heavier model manually and compare latency.

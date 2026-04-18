@@ -1,15 +1,15 @@
-package local.quitewhisper.compose
+package fabled.quitewhisper.compose
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import local.quitewhisper.compose.engine.EngineConnection
-import local.quitewhisper.compose.engine.EngineEventName
-import local.quitewhisper.compose.engine.EngineJson
-import local.quitewhisper.compose.engine.EngineMessage
-import local.quitewhisper.compose.engine.EngineRequest
-import local.quitewhisper.compose.engine.OverlayPayload
+import fabled.quitewhisper.compose.engine.EngineConnection
+import fabled.quitewhisper.compose.engine.EngineEventName
+import fabled.quitewhisper.compose.engine.EngineJson
+import fabled.quitewhisper.compose.engine.EngineMessage
+import fabled.quitewhisper.compose.engine.EngineRequest
+import fabled.quitewhisper.compose.engine.OverlayPayload
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -95,7 +95,7 @@ private class FakeEngineConnection : EngineConnection {
     ): EngineMessage.Result {
         val payload = when (request) {
             is EngineRequest.GetSettings -> EngineJson.json.encodeToJsonElement(
-                local.quitewhisper.compose.engine.AppSettings(
+                fabled.quitewhisper.compose.engine.AppSettings(
                     hotkey = "Control+Alt+Space",
                     modelPath = null,
                     microphoneDeviceId = null,
@@ -104,7 +104,7 @@ private class FakeEngineConnection : EngineConnection {
                 ),
             )
             is EngineRequest.GetModelStatus -> EngineJson.json.encodeToJsonElement(
-                local.quitewhisper.compose.engine.ModelStatus(
+                fabled.quitewhisper.compose.engine.ModelStatus(
                     configuredPath = null,
                     defaultModelPath = "model.bin",
                     defaultModelExists = false,

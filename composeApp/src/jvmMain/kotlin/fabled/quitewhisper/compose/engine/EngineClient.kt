@@ -1,4 +1,4 @@
-package local.quitewhisper.compose.engine
+package fabled.quitewhisper.compose.engine
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
