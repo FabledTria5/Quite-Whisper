@@ -14,7 +14,7 @@ The MVP records while `Control+Alt+Space` is held, transcribes locally with Whis
 ## Development
 
 ```powershell
-gradle :composeApp:run
+.\gradlew.bat :composeApp:run
 ```
 
 On Windows, run Rust commands through the helper so MSVC, LLVM/libclang, CMake, and Ninja are visible in the same shell:
@@ -22,7 +22,8 @@ On Windows, run Rust commands through the helper so MSVC, LLVM/libclang, CMake, 
 ```powershell
 .\scripts\windows-dev.ps1 cargo check
 .\scripts\windows-dev.ps1 cargo test
-gradle :composeApp:packageDistributionForCurrentOS
+.\gradlew.bat :composeApp:jvmTest
+.\gradlew.bat :composeApp:packageDistributionForCurrentOS
 ```
 
 The first run can download `ggml-small-q5_1.bin` into the app config directory. You can also select an existing `.bin` model in the settings window, including a heavier model such as `ggml-large-v3-turbo-q5_0.bin` when accuracy matters more than latency.

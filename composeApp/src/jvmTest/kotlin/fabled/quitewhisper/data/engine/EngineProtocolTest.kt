@@ -1,4 +1,4 @@
-package fabled.quitewhisper.compose.engine
+package fabled.quitewhisper.data.engine
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -21,7 +21,7 @@ class EngineProtocolTest {
     fun encodesSaveSettingsRequestWithSnakeCasePayload() {
         val request = EngineRequest.SaveSettings(
             id = "cmd-2",
-            settings = AppSettings(
+            settings = EngineAppSettings(
                 hotkey = "Control+Alt+Space",
                 modelPath = "C:/models/ggml.bin",
                 microphoneDeviceId = null,
@@ -54,14 +54,14 @@ class EngineProtocolTest {
         assertTrue(result.ok)
         assertEquals("cmd-3", result.id)
         assertEquals(
-            AppSettings(
+                EngineAppSettings(
                 hotkey = "Control+Alt+Space",
                 modelPath = null,
                 microphoneDeviceId = null,
                 glossaryTerms = listOf("Kotlin"),
                 restoreClipboard = false,
             ),
-            result.payloadAs<AppSettings>(),
+            result.payloadAs<EngineAppSettings>(),
         )
     }
 
