@@ -1,4 +1,4 @@
-package fabled.quitewhisper.compose.engine
+package fabled.quitewhisper.data.engine
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -10,24 +10,11 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import java.io.Closeable
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
-
-sealed interface HotkeyEvent {
-    data object Pressed : HotkeyEvent
-    data object Released : HotkeyEvent
-    data class Error(val message: String) : HotkeyEvent
-}
-
-interface HotkeyConnection : Closeable {
-    val events: SharedFlow<HotkeyEvent>
-
-    suspend fun start(hotkey: String)
-}
 
 class HotkeyClient(
     private val helperPath: Path = defaultHotkeyHelperPath(),

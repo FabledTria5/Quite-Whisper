@@ -24,8 +24,10 @@ Core behavior:
 - Synthetic paste: `enigo`.
 
 Important files:
-- Compose app: `composeApp/src/main/kotlin/fabled/quitewhisper/compose/Main.kt`
-- Compose engine client: `composeApp/src/main/kotlin/fabled/quitewhisper/compose/engine/EngineClient.kt`
+- Compose app shell: `composeApp/src/jvmMain/kotlin/fabled/quitewhisper/app/Main.kt`
+- Compose MVI screen/ViewModel: `composeApp/src/commonMain/kotlin/fabled/quitewhisper/presentation/main/`
+- Compose engine client: `composeApp/src/jvmMain/kotlin/fabled/quitewhisper/data/engine/ProcessEngineConnection.kt`
+- Compose engine protocol/repository: `composeApp/src/commonMain/kotlin/fabled/quitewhisper/data/`
 - Engine IPC/runtime: `engine/src/engine.rs`
 - Audio pipeline: `engine/src/audio.rs`
 - Whisper pipeline: `engine/src/speech.rs`
@@ -49,7 +51,7 @@ Use the helper script from the repo root so all required paths/env vars are set:
 ```powershell
 .\scripts\windows-dev.ps1 cargo check
 .\scripts\windows-dev.ps1 cargo test
-gradle :composeApp:test
+.\gradlew.bat :composeApp:jvmTest
 gradle :composeApp:packageDistributionForCurrentOS
 ```
 
@@ -66,12 +68,12 @@ The project has been verified on Windows with:
 ```powershell
 .\scripts\windows-dev.ps1 cargo check
 .\scripts\windows-dev.ps1 cargo test
-gradle :composeApp:test
-gradle :composeApp:packageDistributionForCurrentOS
+.\gradlew.bat :composeApp:jvmTest
+.\gradlew.bat :composeApp:packageDistributionForCurrentOS
 ```
 
 The Compose package build produces:
-- `composeApp/build/compose/binaries/main/msi/QuiteWhisper-1.0.0.msi`
+- `composeApp/build/compose/binaries/main/msi/fabled.quitewhisper.compose-1.0.0.msi`
 - `engine/target/release/quite-whisper-engine.exe`
 
 ## Runtime Notes
