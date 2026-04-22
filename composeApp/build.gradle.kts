@@ -25,12 +25,20 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(projects.core.designSystem)
+            implementation(projects.core.presentation)
+
             // Core
             implementation(dependencyNotation =  libs.kotlinx.serialization.json)
+            implementation(dependencyNotation = libs.kotlinx.coroutines.core)
+            implementation(dependencyNotation = libs.koin.core)
+            implementation(dependencyNotation = libs.koin.core.viewmodel)
+            implementation(dependencyNotation = libs.koin.compose.viewmodel)
 
             // Lifecycle
             implementation(dependencyNotation = libs.androidx.lifecycle.viewmodelCompose)
             implementation(dependencyNotation = libs.androidx.lifecycle.runtimeCompose)
+            implementation(dependencyNotation =  "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
 
             // Compose
             implementation(dependencyNotation = libs.compose.runtime)
@@ -45,6 +53,7 @@ kotlin {
         commonTest.dependencies {
             implementation(dependencyNotation = libs.kotlin.test)
             implementation(dependencyNotation = libs.kotlinx.coroutines.test)
+            implementation(dependencyNotation = libs.koin.test)
         }
 
         jvmMain.dependencies {
@@ -99,7 +108,7 @@ tasks.matching { it.name == "run" || it.name == "runDistributable" }.configureEa
 
 compose.desktop {
     application {
-        mainClass = "fabled.quitewhisper.compose.MainKt"
+        mainClass = "fabled.quitewhisper.app.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Msi, TargetFormat.Dmg, TargetFormat.Deb)

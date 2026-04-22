@@ -1,5 +1,9 @@
-package fabled.quitewhisper.compose.engine
+package fabled.quitewhisper.data.engine
 
+import fabled.quitewhisper.domain.AppSettings
+import fabled.quitewhisper.domain.MicrophoneStatus
+import fabled.quitewhisper.domain.ModelStatus
+import fabled.quitewhisper.domain.OverlayStatus
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -12,9 +16,11 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Serializable
-data class AppSettings(
+data class EngineAppSettings(
     val hotkey: String,
     @SerialName("model_path")
     val modelPath: String?,
@@ -27,7 +33,7 @@ data class AppSettings(
 )
 
 @Serializable
-data class ModelStatus(
+data class EngineModelStatus(
     @SerialName("configured_path")
     val configuredPath: String?,
     @SerialName("default_model_path")
@@ -39,14 +45,14 @@ data class ModelStatus(
 )
 
 @Serializable
-data class MicrophoneStatus(
+data class EngineMicrophoneStatus(
     @SerialName("default_device")
     val defaultDevice: String?,
     val devices: List<String>,
 )
 
 @Serializable
-data class OverlayPayload(
+data class EngineOverlayPayload(
     val state: String,
     val message: String,
 )
@@ -61,7 +67,7 @@ sealed interface EngineRequest {
     val id: String
 
     data class GetSettings(override val id: String) : EngineRequest
-    data class SaveSettings(override val id: String, val settings: AppSettings) : EngineRequest
+    data class SaveSettings(override val id: String, val settings: EngineAppSettings) : EngineRequest
     data class GetModelStatus(override val id: String) : EngineRequest
     data class DownloadDefaultModel(override val id: String) : EngineRequest
     data class SelectModelPath(override val id: String) : EngineRequest
@@ -120,7 +126,7 @@ object EngineJson {
         val encoded = when (request) {
             is EngineRequest.GetSettings -> requestObject(request.id, "getSettings")
             is EngineRequest.SaveSettings -> requestObject(request.id, "saveSettings") {
-                put("settings", json.encodeToJsonElement(AppSettings.serializer(), request.settings))
+                put("settings", json.encodeToJsonElement(EngineAppSettings.serializer(), request.settings))
             }
             is EngineRequest.GetModelStatus -> requestObject(request.id, "getModelStatus")
             is EngineRequest.DownloadDefaultModel -> requestObject(request.id, "downloadDefaultModel")
@@ -156,6 +162,44 @@ inline fun <reified T> EngineMessage.Result.payloadAs(): T {
     val payload = requireNotNull(payload) { "Engine result has no payload" }
     return EngineJson.json.decodeFromJsonElement(payload)
 }
+
+fun newCommandId(): String = newUuidString()
+
+@OptIn(ExperimentalUuidApi::class)
+private fun newUuidString(): String = Uuid.random().toString()
+
+fun EngineAppSettings.toDomain() = AppSettings(
+    hotkey = hotkey,
+    modelPath = modelPath,
+    microphoneDeviceId = microphoneDeviceId,
+    glossaryTerms = glossaryTerms,
+    restoreClipboard = restoreClipboard,
+)
+
+fun AppSettings.toEngine() = EngineAppSettings(
+    hotkey = hotkey,
+    modelPath = modelPath,
+    microphoneDeviceId = microphoneDeviceId,
+    glossaryTerms = glossaryTerms,
+    restoreClipboard = restoreClipboard,
+)
+
+fun EngineModelStatus.toDomain() = ModelStatus(
+    configuredPath = configuredPath,
+    defaultModelPath = defaultModelPath,
+    defaultModelExists = defaultModelExists,
+    configuredModelExists = configuredModelExists,
+)
+
+fun EngineMicrophoneStatus.toDomain() = MicrophoneStatus(
+    defaultDevice = defaultDevice,
+    devices = devices,
+)
+
+fun EngineOverlayPayload.toDomain() = OverlayStatus(
+    state = state,
+    message = message,
+)
 
 private fun requestObject(
     id: String,

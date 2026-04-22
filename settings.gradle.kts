@@ -1,4 +1,5 @@
 rootProject.name = "QuiteWhisper"
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
     repositories {
@@ -32,3 +33,5 @@ plugins {
 }
 
 include(":composeApp")
+include(":core:presentation")
+include(":core:design-system")

@@ -1,4 +1,4 @@
-package fabled.quitewhisper.compose.engine
+package fabled.quitewhisper.data.engine
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -10,28 +10,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.io.BufferedWriter
-import java.io.Closeable
 import java.io.File
 import java.io.OutputStreamWriter
 import java.nio.file.Path
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
-interface EngineConnection : Closeable {
-    val messages: SharedFlow<EngineMessage>
-
-    suspend fun start()
-
-    suspend fun send(
-        request: EngineRequest,
-        timeoutMillis: Long = 30_000,
-    ): EngineMessage.Result
-}
-
-class EngineClient(
+class ProcessEngineConnection(
     private val enginePath: Path = defaultEnginePath(),
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) : EngineConnection {
@@ -77,9 +64,8 @@ class EngineClient(
 
     override fun close() {
         runCatching {
-            val id = newCommandId()
             val activeWriter = writer ?: return@runCatching
-            activeWriter.write(EngineJson.encodeRequestLine(EngineRequest.Shutdown(id)))
+            activeWriter.write(EngineJson.encodeRequestLine(EngineRequest.Shutdown(newCommandId())))
             activeWriter.flush()
         }
         writer = null
@@ -100,8 +86,6 @@ class EngineClient(
         }
     }
 }
-
-fun newCommandId(): String = UUID.randomUUID().toString()
 
 fun defaultEnginePath(
     startDirectory: Path = Path(System.getProperty("user.dir")).toAbsolutePath(),
