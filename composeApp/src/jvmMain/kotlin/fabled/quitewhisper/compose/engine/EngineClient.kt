@@ -46,7 +46,7 @@ class EngineClient(
     override suspend fun start() = withContext(Dispatchers.IO) {
         if (process != null) return@withContext
         require(enginePath.exists()) {
-            "Rust engine binary was not found at $enginePath. Run `gradle :composeApp:run` or `.\\scripts\\windows-dev.ps1 cargo build --bin quite-whisper-engine` from the repo root, or set QUITEWHISPER_ENGINE_PATH."
+            missingEngineMessage(enginePath)
         }
 
         val nextProcess = ProcessBuilder(enginePath.toString())
@@ -138,4 +138,19 @@ fun engineExecutableName(): String =
         "quite-whisper-engine.exe"
     } else {
         "quite-whisper-engine"
+    }
+
+fun missingEngineMessage(enginePath: Path): String =
+    "Rust engine binary was not found at $enginePath. " +
+        "Run `./gradlew :composeApp:run` from the repo root to build and bundle the sidecar. " +
+        "On macOS/Linux, install Rust, CMake, and Xcode Command Line Tools or clang, then run " +
+        "`cargo build --manifest-path engine/Cargo.toml --bin quite-whisper-engine`. " +
+        "On Windows, run `.\\scripts\\windows-dev.ps1 cargo build --bin quite-whisper-engine`. " +
+        "To use a custom binary, set QUITEWHISPER_ENGINE_PATH."
+
+fun sidecarExecutableName(binaryName: String): String =
+    if (System.getProperty("os.name").contains("Windows", ignoreCase = true)) {
+        "$binaryName.exe"
+    } else {
+        binaryName
     }

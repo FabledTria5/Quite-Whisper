@@ -4,6 +4,7 @@ import java.nio.file.Files
 import kotlin.io.path.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertContains
 
 class EnginePathTest {
     @Test
@@ -55,5 +56,15 @@ class EnginePathTest {
             repoRoot.resolve(Path("engine", "target", "debug", engineExecutableName())),
             defaultEnginePath(startDirectory = composeDir),
         )
+    }
+
+    @Test
+    fun missingEngineMessageMentionsUnixAndWindowsBuildCommands() {
+        val message = missingEngineMessage(Path("/missing/quite-whisper-engine"))
+
+        assertContains(message, "./gradlew :composeApp:run")
+        assertContains(message, "cargo build --manifest-path engine/Cargo.toml --bin quite-whisper-engine")
+        assertContains(message, ".\\scripts\\windows-dev.ps1 cargo build --bin quite-whisper-engine")
+        assertContains(message, "QUITEWHISPER_ENGINE_PATH")
     }
 }

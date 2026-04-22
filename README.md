@@ -25,6 +25,26 @@ On Windows, run Rust commands through the helper so MSVC, LLVM/libclang, CMake, 
 gradle :composeApp:packageDistributionForCurrentOS
 ```
 
+On macOS, the default `Control+Alt+Space` shortcut is `Control+Option+Space`.
+Grant microphone permission for recording, and grant Accessibility/Input Monitoring permissions if macOS blocks global key-state observation or synthetic paste.
+To debug macOS hotkey detection without launching Compose, run:
+
+```bash
+# Raw key-state polling:
+cargo run --manifest-path engine/Cargo.toml --bin hotkey-probe -- "Control+Option+Space"
+
+# Registered global hotkey with a winit event loop:
+cargo run --manifest-path engine/Cargo.toml --bin global-hotkey-probe -- "Control+Option+Space"
+```
+
+To isolate paste permissions from speech recognition, focus a text field within 3 seconds after running:
+
+```bash
+cargo run --manifest-path engine/Cargo.toml --bin paste-probe -- "QuiteWhisper paste probe" false
+```
+
+If this fails with an Accessibility error, grant macOS Accessibility permission to the launching terminal or app. If it reports success but no text appears, keep clipboard restore disabled while debugging the target app.
+
 The first run can download `ggml-small-q5_1.bin` into the app config directory. You can also select an existing `.bin` model in the settings window, including a heavier model such as `ggml-large-v3-turbo-q5_0.bin` when accuracy matters more than latency.
 
 ## Current MVP Behavior

@@ -11,6 +11,28 @@ fn parses_control_alt_space_hotkey() {
 }
 
 #[test]
+fn parses_macos_option_alias_for_alt() {
+    let hotkey = parse_hotkey("Control+Option+Space").unwrap();
+
+    assert!(hotkey.control);
+    assert!(hotkey.alt);
+    assert!(!hotkey.shift);
+    assert!(!hotkey.meta);
+    assert_eq!(hotkey.key_name(), "Space");
+}
+
+#[test]
+fn parses_macos_command_alias_for_meta() {
+    let hotkey = parse_hotkey("Command+Shift+Space").unwrap();
+
+    assert!(!hotkey.control);
+    assert!(!hotkey.alt);
+    assert!(hotkey.shift);
+    assert!(hotkey.meta);
+    assert_eq!(hotkey.key_name(), "Space");
+}
+
+#[test]
 fn hotkey_state_emits_press_and_release_edges_once() {
     let mut state = HotkeyState::default();
 

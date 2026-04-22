@@ -16,6 +16,7 @@ impl TextInserter {
             restore_clipboard,
             &mut SystemClipboard::new()?,
             &mut SystemKeyboard::default(),
+            PastePermissions::current(),
         )
     }
 }
@@ -29,12 +30,31 @@ trait KeyboardPort {
     fn paste(&mut self) -> anyhow::Result<()>;
 }
 
+struct PastePermissions {
+    can_post_keyboard_events: bool,
+}
+
+impl PastePermissions {
+    fn current() -> Self {
+        Self {
+            can_post_keyboard_events: can_post_keyboard_events(),
+        }
+    }
+}
+
 fn paste_with_ports(
     text: &str,
     restore_clipboard: bool,
     clipboard: &mut dyn ClipboardPort,
     keyboard: &mut dyn KeyboardPort,
+    permissions: PastePermissions,
 ) -> anyhow::Result<()> {
+    if !permissions.can_post_keyboard_events {
+        anyhow::bail!(
+            "macOS Accessibility permission is required to paste text. Grant access to QuiteWhisper, Terminal, or the launched quite-whisper-engine process in System Settings > Privacy & Security > Accessibility, then restart the app."
+        );
+    }
+
     let previous = if restore_clipboard {
         clipboard.get_text()?
     } else {
@@ -65,6 +85,21 @@ impl SystemClipboard {
             clipboard: Clipboard::new()?,
         })
     }
+}
+
+#[cfg(target_os = "macos")]
+fn can_post_keyboard_events() -> bool {
+    #[link(name = "ApplicationServices", kind = "framework")]
+    extern "C" {
+        fn AXIsProcessTrusted() -> bool;
+    }
+
+    unsafe { AXIsProcessTrusted() }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn can_post_keyboard_events() -> bool {
+    true
 }
 
 impl ClipboardPort for SystemClipboard {
@@ -148,7 +183,16 @@ mod tests {
         };
         let mut keyboard = FakeKeyboard::default();
 
-        paste_with_ports("new", true, &mut clipboard, &mut keyboard).unwrap();
+        paste_with_ports(
+            "new",
+            true,
+            &mut clipboard,
+            &mut keyboard,
+            PastePermissions {
+                can_post_keyboard_events: true,
+            },
+        )
+        .unwrap();
 
         assert!(keyboard.pasted);
         assert_eq!(clipboard.text.as_deref(), Some("old"));
@@ -163,10 +207,44 @@ mod tests {
         };
         let mut keyboard = FakeKeyboard::default();
 
-        paste_with_ports("new", false, &mut clipboard, &mut keyboard).unwrap();
+        paste_with_ports(
+            "new",
+            false,
+            &mut clipboard,
+            &mut keyboard,
+            PastePermissions {
+                can_post_keyboard_events: true,
+            },
+        )
+        .unwrap();
 
         assert!(keyboard.pasted);
         assert_eq!(clipboard.text.as_deref(), Some("new"));
         assert_eq!(clipboard.writes, vec!["new"]);
+    }
+
+    #[test]
+    fn paste_fails_before_changing_clipboard_when_accessibility_is_missing() {
+        let mut clipboard = FakeClipboard {
+            text: Some("old".to_string()),
+            writes: Vec::new(),
+        };
+        let mut keyboard = FakeKeyboard::default();
+
+        let error = paste_with_ports(
+            "new",
+            false,
+            &mut clipboard,
+            &mut keyboard,
+            PastePermissions {
+                can_post_keyboard_events: false,
+            },
+        )
+        .unwrap_err();
+
+        assert!(error.to_string().contains("Accessibility"));
+        assert!(!keyboard.pasted);
+        assert_eq!(clipboard.text.as_deref(), Some("old"));
+        assert!(clipboard.writes.is_empty());
     }
 }

@@ -13,6 +13,9 @@ import fabled.quitewhisper.compose.engine.EngineEventName
 import fabled.quitewhisper.compose.engine.EngineJson
 import fabled.quitewhisper.compose.engine.EngineMessage
 import fabled.quitewhisper.compose.engine.EngineRequest
+import fabled.quitewhisper.compose.engine.HotkeyClient
+import fabled.quitewhisper.compose.engine.HotkeyConnection
+import fabled.quitewhisper.compose.engine.HotkeyEvent
 import fabled.quitewhisper.compose.engine.OverlayPayload
 import fabled.quitewhisper.compose.engine.newCommandId
 import fabled.quitewhisper.compose.engine.payloadAs
@@ -21,9 +24,11 @@ import kotlinx.serialization.json.decodeFromJsonElement
 class AppController(
     private val scope: CoroutineScope,
     private val engineClient: EngineConnection = EngineClient(),
+    private val hotkeyClient: HotkeyConnection = HotkeyClient(),
 ) {
     private val _state = MutableStateFlow(AppUiState())
     val state: StateFlow<AppUiState> = _state
+    private var hotkeyRecordingActive = false
 
     fun start() {
         scope.launch {
@@ -31,7 +36,9 @@ class AppController(
                 engineClient.start()
                 _state.update { it.copy(engineStatus = "Connected", status = "Engine connected.") }
                 collectEngineMessages()
-                refresh()
+                collectHotkeyEvents()
+                val settings = refresh()
+                startHotkeyHelper(settings.hotkey)
             }.onFailure { error ->
                 _state.update {
                     it.copy(
@@ -44,6 +51,7 @@ class AppController(
     }
 
     fun close() {
+        hotkeyClient.close()
         engineClient.close()
     }
 
@@ -94,7 +102,7 @@ class AppController(
         }
     }
 
-    private suspend fun refresh() {
+    private suspend fun refresh(): AppSettings {
         _state.update { it.copy(status = "Refreshing engine state...") }
         val settings = engineClient
             .send(EngineRequest.GetSettings(newCommandId()))
@@ -114,6 +122,7 @@ class AppController(
                 restoreClipboardDraft = settings.restoreClipboard,
             )
         }
+        return settings
     }
 
     private suspend fun saveSettings() {
@@ -134,6 +143,7 @@ class AppController(
         if (result.ok) {
             _state.update { it.copy(status = "Settings saved.", settings = settings) }
             refresh()
+            startHotkeyHelper(settings.hotkey)
         } else {
             _state.update { it.copy(status = result.error?.message ?: "Settings save failed.") }
         }
@@ -186,6 +196,41 @@ class AppController(
                 recording = false,
             )
         }
+    }
+
+    private fun collectHotkeyEvents() {
+        scope.launch {
+            hotkeyClient.events.collect { event ->
+                handleHotkeyEvent(event)
+            }
+        }
+    }
+
+    private fun handleHotkeyEvent(event: HotkeyEvent) {
+        when (event) {
+            HotkeyEvent.Pressed -> {
+                if (hotkeyRecordingActive || _state.value.recording) return
+                hotkeyRecordingActive = true
+                launchAction { startRecording() }
+            }
+            HotkeyEvent.Released -> {
+                if (!hotkeyRecordingActive) return
+                hotkeyRecordingActive = false
+                launchAction { stopRecordingAndTranscribe() }
+            }
+            is HotkeyEvent.Error -> {
+                _state.update { it.copy(status = event.message) }
+            }
+        }
+    }
+
+    private suspend fun startHotkeyHelper(hotkey: String) {
+        runCatching { hotkeyClient.start(hotkey) }
+            .onFailure { error ->
+                _state.update {
+                    it.copy(status = error.message ?: "Hotkey helper failed to start.")
+                }
+            }
     }
 
     private fun handleEvent(event: EngineMessage.Event) {

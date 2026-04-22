@@ -2,6 +2,8 @@ package fabled.quitewhisper.compose
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import fabled.quitewhisper.compose.engine.EngineConnection
@@ -9,12 +11,15 @@ import fabled.quitewhisper.compose.engine.EngineEventName
 import fabled.quitewhisper.compose.engine.EngineJson
 import fabled.quitewhisper.compose.engine.EngineMessage
 import fabled.quitewhisper.compose.engine.EngineRequest
+import fabled.quitewhisper.compose.engine.HotkeyConnection
+import fabled.quitewhisper.compose.engine.HotkeyEvent
 import fabled.quitewhisper.compose.engine.OverlayPayload
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.coroutines.coroutineContext
 
 class AppControllerTest {
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -35,7 +40,7 @@ class AppControllerTest {
     @Test
     fun overlayStatusEventUpdatesChipState() = runTest {
         val engine = FakeEngineConnection()
-        val controller = AppController(scope = this, engineClient = engine)
+        val controller = AppController(scope = this, engineClient = engine, hotkeyClient = FakeHotkeyConnection())
 
         controller.onEngineMessage(
             EngineMessage.Event(
@@ -57,6 +62,7 @@ class AppControllerTest {
         val controller = AppController(
             scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob()),
             engineClient = FakeEngineConnection(),
+            hotkeyClient = FakeHotkeyConnection(),
         )
 
         controller.onAction(AppAction.HideMainWindow)
@@ -66,6 +72,35 @@ class AppControllerTest {
         controller.onAction(AppAction.ShowMainWindow)
 
         assertTrue(controller.state.value.mainWindowVisible)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun hotkeyPressAndReleaseSendRecordingCommands() = runTest {
+        val engine = FakeEngineConnection()
+        val hotkey = FakeHotkeyConnection()
+        val controller = AppController(scope = this, engineClient = engine, hotkeyClient = hotkey)
+
+        controller.start()
+        advanceUntilIdle()
+
+        hotkey.emit(HotkeyEvent.Pressed)
+        advanceUntilIdle()
+        hotkey.emit(HotkeyEvent.Released)
+        advanceUntilIdle()
+
+        val actualRequests = engine.requests.map { it::class }
+        coroutineContext.cancelChildren()
+
+        assertEquals(
+            listOf(
+                EngineRequest.GetSettings::class,
+                EngineRequest.GetModelStatus::class,
+                EngineRequest.StartRecording::class,
+                EngineRequest.StopRecordingAndTranscribe::class,
+            ),
+            actualRequests,
+        )
     }
 }
 
@@ -86,6 +121,7 @@ private class ThrowingEngineConnection(
 
 private class FakeEngineConnection : EngineConnection {
     override val messages = MutableSharedFlow<EngineMessage>(replay = 1)
+    val requests = mutableListOf<EngineRequest>()
 
     override suspend fun start() = Unit
 
@@ -93,6 +129,7 @@ private class FakeEngineConnection : EngineConnection {
         request: EngineRequest,
         timeoutMillis: Long,
     ): EngineMessage.Result {
+        requests += request
         val payload = when (request) {
             is EngineRequest.GetSettings -> EngineJson.json.encodeToJsonElement(
                 fabled.quitewhisper.compose.engine.AppSettings(
@@ -120,6 +157,22 @@ private class FakeEngineConnection : EngineConnection {
             payload = payload,
             error = null,
         )
+    }
+
+    override fun close() = Unit
+}
+
+private class FakeHotkeyConnection : HotkeyConnection {
+    private val _events = MutableSharedFlow<HotkeyEvent>(extraBufferCapacity = 8)
+    override val events: SharedFlow<HotkeyEvent> = _events
+    val startedHotkeys = mutableListOf<String>()
+
+    override suspend fun start(hotkey: String) {
+        startedHotkeys += hotkey
+    }
+
+    fun emit(event: HotkeyEvent) {
+        _events.tryEmit(event)
     }
 
     override fun close() = Unit
