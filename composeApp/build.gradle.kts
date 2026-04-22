@@ -270,7 +270,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Msi, TargetFormat.Dmg, TargetFormat.Deb)
-            packageName = "fabled.quitewhisper.compose"
+            packageName = "fabled.quitewhisper.app"
             packageVersion = "1.0.0"
             appResourcesRootDir.set(engineResourcesRoot)
         }

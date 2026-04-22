@@ -53,7 +53,7 @@ private fun rememberViewModelStoreOwner(): ViewModelStoreOwner {
 }
 
 fun main() {
-    System.setProperty("skiko.renderApi", "OPENGL")
+//    System.setProperty("skiko.renderApi", "OPENGL")
 
     application {
         KoinApplication(

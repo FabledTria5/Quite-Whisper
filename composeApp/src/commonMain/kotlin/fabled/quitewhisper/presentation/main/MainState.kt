@@ -1,10 +1,12 @@
 package fabled.quitewhisper.presentation.main
 
+import androidx.compose.runtime.Immutable
 import fabled.quitewhisper.domain.AppSettings
 import fabled.quitewhisper.domain.MicrophoneStatus
 import fabled.quitewhisper.domain.ModelStatus
 import fabled.quitewhisper.domain.OverlayStatus
 
+@Immutable
 data class MainState(
     val status: String = "Starting...",
     val engineStatus: String = "Disconnected",

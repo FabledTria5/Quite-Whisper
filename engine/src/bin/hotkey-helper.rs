@@ -10,6 +10,8 @@ use winit::{
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
     window::WindowId,
 };
+#[cfg(target_os = "macos")]
+use winit::platform::macos::{ActivationPolicy, EventLoopBuilderExtMacOS};
 
 fn main() -> anyhow::Result<()> {
     let hotkey_text = env::args()
@@ -23,6 +25,9 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
+    let event_loop = build_event_loop()?;
+    event_loop.set_control_flow(ControlFlow::Poll);
+
     let manager = GlobalHotKeyManager::new()?;
     if let Err(error) = manager.register(hotkey) {
         print_error(format!("Failed to register hotkey `{hotkey_text}`: {error}"));
@@ -30,8 +35,6 @@ fn main() -> anyhow::Result<()> {
     }
     let hotkey_id = hotkey.id();
 
-    let event_loop = EventLoop::new()?;
-    event_loop.set_control_flow(ControlFlow::Poll);
     let mut app = HotkeyHelperApp {
         hotkey_id,
         _manager: manager,
@@ -39,6 +42,23 @@ fn main() -> anyhow::Result<()> {
     event_loop.run_app(&mut app)?;
     Ok(())
 }
+
+fn build_event_loop() -> anyhow::Result<EventLoop<()>> {
+    let mut builder = EventLoop::builder();
+    configure_event_loop(&mut builder);
+    Ok(builder.build()?)
+}
+
+#[cfg(target_os = "macos")]
+fn configure_event_loop(builder: &mut winit::event_loop::EventLoopBuilder<()>) {
+    builder
+        .with_activation_policy(ActivationPolicy::Accessory)
+        .with_default_menu(false)
+        .with_activate_ignoring_other_apps(false);
+}
+
+#[cfg(not(target_os = "macos"))]
+fn configure_event_loop(_builder: &mut winit::event_loop::EventLoopBuilder<()>) {}
 
 struct HotkeyHelperApp {
     hotkey_id: u32,

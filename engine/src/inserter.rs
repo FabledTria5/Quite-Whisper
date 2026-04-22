@@ -123,14 +123,7 @@ struct SystemKeyboard {
 
 impl KeyboardPort for SystemKeyboard {
     fn paste(&mut self) -> anyhow::Result<()> {
-        #[cfg(target_os = "macos")]
-        let modifier = Key::Meta;
-        #[cfg(not(target_os = "macos"))]
-        let modifier = Key::Control;
-        #[cfg(target_os = "windows")]
-        let paste_key = Key::V;
-        #[cfg(not(target_os = "windows"))]
-        let paste_key = Key::Layout('v');
+        let (modifier, paste_key) = paste_shortcut();
 
         self.enigo.key_down(modifier);
         thread::sleep(KEY_EVENT_DELAY);
@@ -138,6 +131,23 @@ impl KeyboardPort for SystemKeyboard {
         thread::sleep(KEY_EVENT_DELAY);
         self.enigo.key_up(modifier);
         Ok(())
+    }
+}
+
+fn paste_shortcut() -> (Key, Key) {
+    #[cfg(target_os = "macos")]
+    {
+        return (Key::Meta, Key::Raw(9));
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        return (Key::Control, Key::V);
+    }
+
+    #[cfg(all(not(target_os = "macos"), not(target_os = "windows")))]
+    {
+        (Key::Control, Key::Layout('v'))
     }
 }
 
@@ -221,6 +231,12 @@ mod tests {
         assert!(keyboard.pasted);
         assert_eq!(clipboard.text.as_deref(), Some("new"));
         assert_eq!(clipboard.writes, vec!["new"]);
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_paste_shortcut_uses_layout_independent_v_keycode() {
+        assert_eq!(paste_shortcut(), (Key::Meta, Key::Raw(9)));
     }
 
     #[test]
