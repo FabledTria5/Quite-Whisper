@@ -145,7 +145,7 @@ abstract class CheckRustEngineToolchainTask : DefaultTask() {
             }
             throw GradleException(
                 "Rust engine toolchain is incomplete. Missing command(s): ${missingCommands.joinToString()}. " +
-                    "$installHint",
+                        installHint,
             )
         }
     }
