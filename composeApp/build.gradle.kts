@@ -266,7 +266,7 @@ markBundledRustEngineExecutables.configure {
 
 compose.desktop {
     application {
-        mainClass = "fabled.quitewhisper.app.MainKt"
+        mainClass = "fabled.quitewhisper.app.presentation.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Msi, TargetFormat.Dmg, TargetFormat.Deb)
