@@ -149,11 +149,88 @@ mod platform {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
+mod platform {
+    use super::{Hotkey, HotkeyKey};
+
+    const HID_SYSTEM_STATE: u32 = 1;
+    const KEY_SPACE: u16 = 49;
+    const KEY_LEFT_COMMAND: u16 = 55;
+    const KEY_RIGHT_COMMAND: u16 = 54;
+    const KEY_LEFT_SHIFT: u16 = 56;
+    const KEY_RIGHT_SHIFT: u16 = 60;
+    const KEY_LEFT_OPTION: u16 = 58;
+    const KEY_RIGHT_OPTION: u16 = 61;
+    const KEY_LEFT_CONTROL: u16 = 59;
+    const KEY_RIGHT_CONTROL: u16 = 62;
+
+    #[link(name = "ApplicationServices", kind = "framework")]
+    extern "C" {
+        fn CGEventSourceKeyState(state_id: u32, key: u16) -> bool;
+    }
+
+    pub fn is_hotkey_pressed(hotkey: &Hotkey) -> bool {
+        modifier_matches(hotkey.control, &[KEY_LEFT_CONTROL, KEY_RIGHT_CONTROL])
+            && modifier_matches(hotkey.alt, &[KEY_LEFT_OPTION, KEY_RIGHT_OPTION])
+            && modifier_matches(hotkey.shift, &[KEY_LEFT_SHIFT, KEY_RIGHT_SHIFT])
+            && modifier_matches(hotkey.meta, &[KEY_LEFT_COMMAND, KEY_RIGHT_COMMAND])
+            && key_down(primary_key_code(hotkey))
+    }
+
+    pub(super) fn primary_key_code(hotkey: &Hotkey) -> u16 {
+        match hotkey.key {
+            HotkeyKey::Space => KEY_SPACE,
+        }
+    }
+
+    #[cfg(test)]
+    pub(super) fn required_modifier_key_codes(hotkey: &Hotkey) -> Vec<Vec<u16>> {
+        let mut key_codes = Vec::new();
+        if hotkey.control {
+            key_codes.push(vec![KEY_LEFT_CONTROL, KEY_RIGHT_CONTROL]);
+        }
+        if hotkey.alt {
+            key_codes.push(vec![KEY_LEFT_OPTION, KEY_RIGHT_OPTION]);
+        }
+        if hotkey.shift {
+            key_codes.push(vec![KEY_LEFT_SHIFT, KEY_RIGHT_SHIFT]);
+        }
+        if hotkey.meta {
+            key_codes.push(vec![KEY_LEFT_COMMAND, KEY_RIGHT_COMMAND]);
+        }
+        key_codes
+    }
+
+    fn modifier_matches(required: bool, keys: &[u16]) -> bool {
+        !required || keys.iter().any(|key| key_down(*key))
+    }
+
+    fn key_down(key: u16) -> bool {
+        unsafe { CGEventSourceKeyState(HID_SYSTEM_STATE, key) }
+    }
+}
+
+#[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
 mod platform {
     use super::Hotkey;
 
     pub fn is_hotkey_pressed(_hotkey: &Hotkey) -> bool {
         false
+    }
+}
+
+#[cfg(all(test, target_os = "macos"))]
+mod macos_tests {
+    use super::{parse_hotkey, platform};
+
+    #[test]
+    fn maps_supported_hotkey_parts_to_macos_virtual_key_codes() {
+        let hotkey = parse_hotkey("Control+Option+Command+Shift+Space").unwrap();
+
+        assert_eq!(platform::primary_key_code(&hotkey), 49);
+        assert_eq!(
+            platform::required_modifier_key_codes(&hotkey),
+            vec![vec![59, 62], vec![58, 61], vec![56, 60], vec![55, 54]],
+        );
     }
 }

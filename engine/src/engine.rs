@@ -1,6 +1,5 @@
 use crate::{
     audio::{self, AudioRecorder},
-    hotkey::{self, HotkeyEdge},
     inserter::TextInserter,
     model,
     overlay::{OverlayPayload, OverlayState},
@@ -175,7 +174,7 @@ pub struct EngineOutcome {
 pub struct EngineRuntime {
     recorder: Mutex<AudioRecorder>,
     settings_store: SettingsStore,
-    settings: Mutex<AppSettings>,
+    settings: Arc<Mutex<AppSettings>>,
     speech: Mutex<SpeechEngine>,
 }
 
@@ -195,7 +194,7 @@ impl EngineRuntime {
         Ok(Self {
             recorder: Mutex::new(AudioRecorder::default()),
             settings_store,
-            settings: Mutex::new(settings),
+            settings: Arc::new(Mutex::new(settings)),
             speech: Mutex::new(SpeechEngine::default()),
         })
     }
@@ -303,11 +302,7 @@ impl EngineRuntime {
     }
 
     fn stop_recording_and_transcribe(&self, id: &str) -> EngineOutcome {
-        let mut events = vec![
-            EngineEvent::recording_stopped(),
-            EngineEvent::transcription_started(),
-            EngineEvent::overlay_status_changed(OverlayState::Transcribing, "Transcribing"),
-        ];
+        let mut events = Vec::new();
 
         match self.transcribe_and_paste() {
             Ok(text) => {
@@ -355,18 +350,32 @@ impl EngineRuntime {
     }
 }
 
+pub fn immediate_events_for_command(command: &EngineCommand) -> Vec<EngineEvent> {
+    match command {
+        EngineCommand::StopRecordingAndTranscribe => vec![
+            EngineEvent::recording_stopped(),
+            EngineEvent::transcription_started(),
+            EngineEvent::overlay_status_changed(OverlayState::Transcribing, "Transcribing"),
+        ],
+        _ => Vec::new(),
+    }
+}
+
 pub async fn run_stdio() -> anyhow::Result<()> {
     let runtime = Arc::new(EngineRuntime::new()?);
     let (sender, receiver) = mpsc::channel::<EngineLoopMessage>();
     let mut stdout = io::stdout().lock();
 
     write_message(&mut stdout, &EngineOutboundMessage::Event(EngineEvent::engine_ready()))?;
-    spawn_stdin_reader(sender.clone());
-    spawn_hotkey_listener(Arc::clone(&runtime), sender);
+    spawn_stdin_reader(sender);
 
     while let Ok(message) = receiver.recv() {
         match message {
             EngineLoopMessage::Request(request) => {
+                for event in immediate_events_for_command(&request.command) {
+                    write_message(&mut stdout, &EngineOutboundMessage::Event(event))?;
+                }
+
                 let outcome = runtime.handle(request).await;
                 for event in outcome.events {
                     write_message(&mut stdout, &EngineOutboundMessage::Event(event))?;
@@ -418,32 +427,6 @@ fn spawn_stdin_reader(sender: mpsc::Sender<EngineLoopMessage>) {
             }
         }
     });
-}
-
-fn spawn_hotkey_listener(
-    runtime: Arc<EngineRuntime>,
-    sender: mpsc::Sender<EngineLoopMessage>,
-) {
-    let hotkey_runtime = Arc::clone(&runtime);
-    hotkey::spawn_polling_listener(
-        move || hotkey_runtime.settings.lock().hotkey.clone(),
-        move |edge| {
-            let outcome = match edge {
-                HotkeyEdge::Pressed => runtime.start_recording("hotkey-start"),
-                HotkeyEdge::Released => runtime.stop_recording_and_transcribe("hotkey-stop"),
-                HotkeyEdge::None => return,
-            };
-
-            for event in outcome.events {
-                if sender
-                    .send(EngineLoopMessage::Outbound(EngineOutboundMessage::Event(event)))
-                    .is_err()
-                {
-                    return;
-                }
-            }
-        },
-    );
 }
 
 fn result_only(result: EngineResult) -> EngineOutcome {

@@ -1,7 +1,7 @@
 use quite_whisper_engine::{
     engine::{
-        EngineCommand, EngineErrorPayload, EngineEvent, EngineOutboundMessage, EngineRequest,
-        EngineResult,
+        immediate_events_for_command, EngineCommand, EngineErrorPayload, EngineEvent,
+        EngineOutboundMessage, EngineRequest, EngineResult,
     },
     settings::AppSettings,
 };
@@ -101,5 +101,38 @@ fn serializes_engine_ready_event() {
             "event": "engineReady",
             "payload": {}
         })
+    );
+}
+
+#[test]
+fn stop_recording_command_has_immediate_transcribing_events() {
+    let events = immediate_events_for_command(&EngineCommand::StopRecordingAndTranscribe);
+    let serialized: Vec<_> = events
+        .into_iter()
+        .map(|event| serde_json::to_value(EngineOutboundMessage::Event(event)).unwrap())
+        .collect();
+
+    assert_eq!(
+        serialized,
+        vec![
+            json!({
+                "type": "event",
+                "event": "recordingStopped",
+                "payload": {}
+            }),
+            json!({
+                "type": "event",
+                "event": "transcriptionStarted",
+                "payload": {}
+            }),
+            json!({
+                "type": "event",
+                "event": "overlayStatusChanged",
+                "payload": {
+                    "state": "transcribing",
+                    "message": "Transcribing"
+                }
+            }),
+        ],
     );
 }
