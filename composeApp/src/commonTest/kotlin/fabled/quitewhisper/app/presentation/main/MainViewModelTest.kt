@@ -89,6 +89,62 @@ class MainViewModelTest {
         assertEquals(1, repository.startRecordingCalls)
         assertEquals(1, repository.stopRecordingCalls)
     }
+
+    @Test
+    fun startRecordingActionStartsRecording() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val repository = FakeDictationRepository()
+        val viewModel =
+            MainViewModel(repository)
+
+        viewModel.onAction(MainAction.StartRecording)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.state.value.recording)
+        assertEquals("Listening...", viewModel.state.value.status)
+        assertEquals(1, repository.startRecordingCalls)
+    }
+
+    @Test
+    fun failedStartRecordingActionUpdatesStatus() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val repository = FakeDictationRepository().apply {
+            startRecordingError = IllegalStateException("No input device is available")
+        }
+        val viewModel =
+            MainViewModel(repository)
+
+        viewModel.onAction(MainAction.StartRecording)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.state.value.recording)
+        assertEquals("No input device is available", viewModel.state.value.status)
+        assertEquals(1, repository.startRecordingCalls)
+    }
+
+    @Test
+    fun failedHotkeyRecordingStartDoesNotTriggerStopOnRelease() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val repository = FakeDictationRepository().apply {
+            startRecordingError = IllegalStateException("No input device is available")
+        }
+        val viewModel =
+            MainViewModel(repository)
+
+        repository.hotkeyEvents.emit(HotkeyEvent.Pressed)
+        advanceUntilIdle()
+
+        repository.hotkeyEvents.emit(HotkeyEvent.Released)
+        advanceUntilIdle()
+
+        repository.hotkeyEvents.emit(HotkeyEvent.Pressed)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.state.value.recording)
+        assertEquals("No input device is available", viewModel.state.value.status)
+        assertEquals(2, repository.startRecordingCalls)
+        assertEquals(0, repository.stopRecordingCalls)
+    }
 }
 
 private class ThrowingDictationRepository(
@@ -123,6 +179,7 @@ private class FakeDictationRepository : DictationRepository {
     override val hotkeyEvents = MutableSharedFlow<HotkeyEvent>(replay = 1)
     var startRecordingCalls = 0
     var stopRecordingCalls = 0
+    var startRecordingError: Throwable? = null
 
     override suspend fun start() = Unit
 
@@ -153,6 +210,7 @@ private class FakeDictationRepository : DictationRepository {
 
     override suspend fun startRecording() {
         startRecordingCalls += 1
+        startRecordingError?.let { throw it }
     }
 
     override suspend fun stopRecordingAndTranscribe() {

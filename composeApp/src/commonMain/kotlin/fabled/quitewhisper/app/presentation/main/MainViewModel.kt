@@ -74,10 +74,14 @@ class MainViewModel(
         }
     }
 
-    private fun launchAction(block: suspend () -> Unit) {
+    private fun launchAction(
+        onFailure: () -> Unit = {},
+        block: suspend () -> Unit,
+    ) {
         viewModelScope.launch {
             runCatching { block() }
                 .onFailure { error ->
+                    onFailure()
                     _state.update {
                         it.copy(
                             status = error.message ?: "Action failed.",
@@ -183,7 +187,7 @@ class MainViewModel(
             HotkeyEvent.Pressed -> {
                 if (hotkeyRecordingActive || _state.value.recording) return
                 hotkeyRecordingActive = true
-                launchAction { startRecording() }
+                launchAction(onFailure = { hotkeyRecordingActive = false }) { startRecording() }
             }
             HotkeyEvent.Released -> {
                 if (!hotkeyRecordingActive) return

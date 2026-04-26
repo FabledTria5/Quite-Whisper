@@ -367,7 +367,7 @@ pub async fn run_stdio() -> anyhow::Result<()> {
     let mut stdout = io::stdout().lock();
 
     write_message(&mut stdout, &EngineOutboundMessage::Event(EngineEvent::engine_ready()))?;
-    spawn_stdin_reader(sender.clone());
+    spawn_stdin_reader(sender);
 
     while let Ok(message) = receiver.recv() {
         match message {
