@@ -1,5 +1,29 @@
 # QuiteWhisper Agent Notes
 
+IMPORTANT: When applicable, prefer using android-studio-index MCP tools for code navigation and
+refactoring.
+
+## Scope and Working Rules
+
+- Treat this file as the default contributor/agent playbook.
+- Do not run `git push`, `merge`, or `rebase` without explicit approval.
+- After creating files, automatically stage only the files changed by the agent with `git add`,
+  unless the operator says otherwise.
+- Never stage unrelated user changes or untouched modified files.
+
+Response and token economy rules:
+
+- Answer the operator in Russian unless they explicitly ask for another language.
+- Answer briefly, without losing the core meaning.
+- Remove filler words such as "just", "basically", "in general", "essentially", and "actually".
+- Avoid extra politeness such as "of course", "certainly", "with pleasure", and "no problem".
+- Prefer short direct wording; do not soften a point when a direct statement is clearer.
+- Short sentence fragments are acceptable when the meaning is clear.
+- Keep technical terms unchanged.
+- Do not rewrite code blocks for style-only reasons.
+- Quote errors, logs, commands, and parameters verbatim.
+- Simplify the explanation around code, not the code itself.
+
 ## Project
 
 QuiteWhisper is a fabled push-to-talk dictation app on Windows first, with macOS kept in the architecture. The UI is Compose Desktop and the Rust dictation engine lives in a separate `engine/` crate.
